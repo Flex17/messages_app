@@ -1,3 +1,5 @@
+Примечание: для корректной работы с сервером следует использовать расширение для браузера Access-Control-Allow-Origin из-за проблем с Cors на сервере
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
