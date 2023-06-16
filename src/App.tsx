@@ -1,26 +1,25 @@
-import React from 'react';
-import logo from './logo.svg';
+import React, {useState} from 'react';
 import './App.css';
+import Messages from "./components/messages/Messages";
+import SortBox from "./components/sortBox/SortBox";
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    const [newestOnTop, setNewestOnTop] = useState(false);
+
+    const handleNewestOnTop = () => {
+        setNewestOnTop(!newestOnTop);
+    }
+
+    return (
+        <div className="App">
+            <div className="title">Список постов</div>
+            <SortBox
+                newestOnTop={newestOnTop}
+                handleNewestOnTop={handleNewestOnTop}
+            />
+            <Messages newestOnTop={newestOnTop} />
+        </div>
+    );
 }
 
 export default App;
