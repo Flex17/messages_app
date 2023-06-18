@@ -1,8 +1,12 @@
 import React, {useEffect, useState} from "react";
 import axios from "axios";
-import Message, {MessageData} from "../message/Message";
-import css from './messages.module.scss';
+import {MessageData} from "../message/Message";
 import {ClipLoader} from "react-spinners";
+import {useScrollToTopRequest} from "../../hooks/useScrollToTopRequest";
+import MessagesList from "./MessagesList";
+
+import css from './messages.module.scss';
+import Description, {SCROLL_DOWN, SCROLL_UP} from "./Description";
 
 const URL = "http://a0830433.xsph.ru/";
 
@@ -12,6 +16,7 @@ interface MessagesI {
 
 const Messages: React.FC<MessagesI> = ({newestOnTop}: MessagesI) => {
     const [messages, setMessages] = useState<MessageData[]>([]);
+    const [prevMessages, setPrevMessages] = useState<MessageData[]>([]);
     const [lastMessageId, setLastMessageId] = useState("0");
     const [isDataLoading, setIsDataLoading] = useState(false);
 
@@ -37,15 +42,31 @@ const Messages: React.FC<MessagesI> = ({newestOnTop}: MessagesI) => {
         })
     }
 
-    // * Функция обработки данных
-    const handleData = (Messages: MessageData[]) => {
-        if (Messages && Messages.length > 0) {
-            if (newestOnTop) {
-                setMessages([...Messages, ...messages]);
-            } else {
-                setMessages([...messages, ...Messages]);
+    // * Запрос на старые посты
+    const getOldMessages = () => {
+        const formData = new FormData();
+        formData.append('actionName', 'MessagesLoad');
+        formData.append('oldMessages', 'true');
+
+        axios.post(URL, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
             }
-            setLastMessageId(Messages[Messages.length - 1].id);
+        }).then(response => {
+            console.log(response.data)
+            setPrevMessages(response.data.Messages);
+        }).catch(error => {
+            console.error(error);
+        })
+    }
+
+    // * Функция обработки данных
+    const handleData = (newMessages: MessageData[]) => {
+        if (newMessages && newMessages.length > 0) {
+            setMessages(prev => [...prev, ...newMessages]);
+
+            const lasMessageId = newMessages[newMessages.length - 1].id;
+            setLastMessageId(lasMessageId);
         }
     }
 
@@ -62,23 +83,49 @@ const Messages: React.FC<MessagesI> = ({newestOnTop}: MessagesI) => {
         }
     }, [lastMessageId]);
 
+    let first = true;
     // * Получение данных при загрузке страницы
     useEffect(() => {
-        getMessageData(lastMessageId);
+        if (first) {
+            getMessageData(lastMessageId);
+            first = false;
+        }
     }, []);
 
+    // * При получении предыдущих сообщений
+    useEffect(() => {
+        setMessages(prev => [...prevMessages, ...prev]);
+    }, [prevMessages]);
+
+    // * Хук для динамического получения с сервера старых постов
+    useScrollToTopRequest(getOldMessages, newestOnTop);
+
+    // * Отображение спинера при загрузке данных
+    if (isDataLoading && lastMessageId === '0') {
+        return (
+            <div className={css.messages}>
+                {
+                    <ClipLoader size={100} />
+                }
+            </div>
+        )
+    }
+
+    const reverseMessages = [...messages].reverse();
+    const isDescriptionVisible = prevMessages.length < 1;
 
     return (
         <div className={css.messages}>
             {
-                isDataLoading && lastMessageId === '0'
-                ? <ClipLoader size={100} />
-                : messages.map((message, i) => (
-                        <Message
-                            message={message}
-                            key={i}
-                        />
-                    ))
+                newestOnTop
+                ?  <>
+                        <MessagesList messages={reverseMessages} />
+                        <Description isVisible={isDescriptionVisible} scroll={SCROLL_DOWN} />
+                    </>
+                : <>
+                        <Description isVisible={isDescriptionVisible} scroll={SCROLL_UP} />
+                        <MessagesList messages={messages} />
+                    </>
             }
         </div>
     );
