@@ -1,5 +1,7 @@
 # Важно: 
 Для корректной работы с сервером следует использовать расширение для браузера Access-Control-Allow-Origin из-за проблем с Cors на сервере
+Также можно запустить хром из консоли:
+open -na Google\ Chrome --args --disable-web-security --user-data-dir="/tmp/chrome_dev"
 
 # Getting Started with Create React App
 
